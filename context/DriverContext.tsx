@@ -1,47 +1,50 @@
 "use client";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
-import React, { createContext, useContext, useState } from 'react';
-
-// Create the Context for the National Digital Driver Registry
 const DriverContext = createContext<any>(null);
 
-/**
- * The DriverProvider acts as a temporary live database.
- * It stores every driver who joins via the portal until the server restarts.
- */
 export function DriverProvider({ children }: { children: React.ReactNode }) {
-  const [drivers, setDrivers] = useState([
-    { 
-      id: 'DRV-001', 
-      name: 'Juma Kapuya', 
-      nit: 'Level 2 Certified', 
-      status: 'Active', 
-      booking: 'None' 
-    }
-  ]);
+  const [drivers, setDrivers] = useState([]);
+  const [mounted, setMounted] = useState(false);
 
-  // Logic for a driver joining from the Onboarding Portal
-  const addDriver = (newDriver: any) => {
-    const id = `DRV-00${drivers.length + 1}`;
-    setDrivers([...drivers, { ...newDriver, id, status: 'Pending', booking: 'None' }]);
+  // Load drivers from Supabase on start
+  useEffect(() => {
+    setMounted(true);
+    fetchDrivers();
+  }, []);
+
+  async function fetchDrivers() {
+    const { data } = await supabase.from('drivers').select('*');
+    if (data) setDrivers(data);
+  }
+
+  const addDriver = async (newDriver: any) => {
+    const { error } = await supabase.from('drivers').insert([
+      { name: newDriver.name, status: 'Pending' }
+    ]);
+    if (!error) fetchDrivers(); // Refresh list
   };
 
-  // Logic for Admin to verify a driver's NIT documents
-  const verifyDriver = (id: string) => {
-    setDrivers(drivers.map(d => d.id === id ? { ...d, status: 'Active', nit: 'Level 2 Certified' } : d));
+  const verifyDriver = async (id: string) => {
+    const { error } = await supabase.from('drivers')
+      .update({ status: 'Active', nit_status: 'Verified' })
+      .eq('id', id);
+    if (!error) fetchDrivers();
   };
 
-  // Logic for Admin to book a driver for a trip
-  const updateBooking = (id: string, trip: string) => {
-    setDrivers(drivers.map(d => d.id === id ? { ...d, booking: trip } : d));
+  const updateBooking = async (id: string, trip: string) => {
+    const { error } = await supabase.from('drivers')
+      .update({ booking: trip })
+      .eq('id', id);
+    if (!error) fetchDrivers();
   };
 
   return (
-    <DriverContext.Provider value={{ drivers, addDriver, verifyDriver, updateBooking }}>
+    <DriverContext.Provider value={{ drivers, addDriver, verifyDriver, updateBooking, mounted }}>
       {children}
     </DriverContext.Provider>
   );
 }
 
-// Hook to allow all pages (Onboarding, Operations, Dashboard) to use the registry data
-export const useDrivers = () => useContext(DriverContext);
+export const useDrivers = () => useContext(DriverContext) || { drivers: [], mounted: false };
