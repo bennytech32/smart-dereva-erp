@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* Restoring the Executive Dashboard Slate-50 background */
+@layer base {
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+  }
+}
+
+/* Ensure the layout isn't blocked by hidden overlays */
+.fixed.inset-0:not(aside, nav) {
+  display: none !important;
+}

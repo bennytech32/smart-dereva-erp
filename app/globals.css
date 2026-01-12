@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    /* Professional tone: minimalist color palette with soft white-gray background */
+    background-color: #f8fafc; 
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Ensure branding colors are reusable as CSS variables */
+:root {
+  --primary-blue: #2563eb; /* "Vantus Blue" for interactive highlights */
+  --slate-accent: #f1f5f9;
+}
